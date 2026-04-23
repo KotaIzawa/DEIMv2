@@ -1,5 +1,5 @@
 __include__: [
-  '../dataset/coco_detection.yml',
+  '../dataset/custom_detection.yml',
   '../runtime.yml',
   '../base/dataloader.yml',
   '../base/optimizer.yml',
@@ -51,12 +51,12 @@ DEIMTransformer:
   use_gateway: False
 
 # Increase to search for the optimal ema
-epoches: 500 # 468 + 32
+epoches: 50 # 40 + 10
 
 ## Our LR-Scheduler
-warmup_iter: 4000
-flat_epoch: 250    # 4 + epoch // 2, e.g., 40 = 4 + 72 / 2
-no_aug_epoch: 32
+warmup_iter: 400
+flat_epoch: 25    # epoch // 2
+no_aug_epoch: 10
 lr_gamma: 0.5
 
 optimizer:
@@ -64,22 +64,22 @@ optimizer:
   params:
     -
       params: '^(?=.*backbone)(?!.*norm|bn).*$'
-      lr: 0.0008
+      lr: 0.00005
     -
       params: '^(?=.*backbone)(?=.*norm|bn).*$'
-      lr: 0.0008
+      lr: 0.00005
       weight_decay: 0.
     -  # not opt
       params: '^(?=.*(?:encoder|decoder))(?=.*(?:norm|bn|bias)).*$'
       weight_decay: 0.
 
-  lr: 0.0016
+  lr: 0.0001
   betas: [0.9, 0.999]
   weight_decay: 0.0001
 
 eval_spatial_size: [640, 640]
 train_dataloader:
-  total_batch_size: 128
+  total_batch_size: 8
   dataset: 
     transforms:
       ops:
@@ -95,7 +95,7 @@ train_dataloader:
         - {type: ConvertPILImage, dtype: 'float32', scale: True}
         - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
       policy:
-        epoch: [4, 250, 400]   # list 
+        epoch: [4, 25, 40]   # list 
         ops: ['Mosaic', 'RandomPhotometricDistort', 'RandomZoomOut', 'RandomIoUCrop']
       mosaic_prob: 0.5
 
@@ -104,13 +104,13 @@ train_dataloader:
     mixup_epochs: [40000, 15000]
     copyblend_prob: 0.0
     copyblend_epochs: [40000, 15000]
-    stop_epoch: 468 # 468 + 32
+    stop_epoch: 40 # 40 + 10
     ema_restart_decay: 0.9999
     base_size: 640
     base_size_repeat: ~
 
 val_dataloader:
-  total_batch_size: 256
+  total_batch_size: 8
   dataset:
     transforms:
       ops:
@@ -125,4 +125,4 @@ DEIMCriterion:
   use_uni_set: False
 
   matcher:
-    matcher_change_epoch: 450   # FIX This
+    matcher_change_epoch: 45
