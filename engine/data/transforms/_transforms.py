@@ -26,6 +26,7 @@ torchvision.disable_beta_transforms_warning()
 RandomPhotometricDistort = register()(T.RandomPhotometricDistort)
 RandomZoomOut = register()(T.RandomZoomOut)
 RandomHorizontalFlip = register()(T.RandomHorizontalFlip)
+RandomVerticalFlip = register()(T.RandomVerticalFlip)
 Resize = register()(T.Resize)
 # ToImageTensor = register()(T.ToImageTensor)
 # ConvertDtype = register()(T.ConvertDtype)
@@ -33,6 +34,36 @@ Resize = register()(T.Resize)
 SanitizeBoundingBoxes = register(name='SanitizeBoundingBoxes')(SanitizeBoundingBoxes)
 RandomCrop = register()(T.RandomCrop)
 Normalize = register()(T.Normalize)
+
+# 画質差対応 augmentation
+RandomAutocontrast = register()(T.RandomAutocontrast)
+RandomEqualize = register()(T.RandomEqualize)
+RandomAdjustSharpness = register()(T.RandomAdjustSharpness)
+
+@register()
+class RandomGaussianBlur(T.GaussianBlur):
+    """確率付きガウシアンブラー（カメラのピントずれを疑似再現）"""
+    def __init__(self, kernel_size=3, sigma=(0.1, 2.0), p=0.5):
+        super().__init__(kernel_size=kernel_size, sigma=sigma)
+        self.p = p
+
+    def forward(self, *inputs):
+        if torch.rand(1).item() < self.p:
+            return super().forward(*inputs)
+        return inputs if len(inputs) > 1 else inputs[0]
+
+
+@register()
+class RandomGaussianNoise(T.GaussianNoise):
+    """確率付きガウシアンノイズ（センサーノイズを疑似再現）"""
+    def __init__(self, mean=0.0, sigma=0.05, clip=True, p=0.3):
+        super().__init__(mean=mean, sigma=sigma, clip=clip)
+        self.p = p
+
+    def forward(self, *inputs):
+        if torch.rand(1).item() < self.p:
+            return super().forward(*inputs)
+        return inputs if len(inputs) > 1 else inputs[0]
 
 
 @register()
